@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <!-- Insert initial data into the 'users' table -->
+    <changeSet id="insert-initial-users" author="Sandesh Khanal">
+        <!-- Insert user A -->
+        <insert tableName="users">
+            <column name="id" valueComputed="NEXTVAL('user_seq')"/>
+            <column name="username" value="A"/>
+            <column name="password" value="passwordA"/>
+            <column name="token" value="NULL"/>
+            <column name="created_date" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="modified_date" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="created_by" value="1"/>
+            <column name="modified_by" value="1"/>
+        </insert>
+
+        <!-- Insert user B -->
+        <insert tableName="users">
+            <column name="id" valueComputed="NEXTVAL('user_seq')"/>
+            <column name="username" value="B"/>
+            <column name="password" value="passwordB"/>
+            <column name="token" value="NULL"/>
+            <column name="created_date" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="modified_date" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="created_by" value="1"/>
+            <column name="modified_by" value="1"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

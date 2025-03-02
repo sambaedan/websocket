@@ -1,0 +1,46 @@
+
+services:
+  # PostgreSQL Service
+  websocket-postgres:
+    image: postgres:15.5
+    container_name: websocket-backend-websocket-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: sandesh123
+      POSTGRES_DB: db_chats
+    ports:
+      - "5432:5432"
+    networks:
+      - backend
+
+  # RabbitMQ Service
+  websocket-rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: websocket-backend-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"  # RabbitMQ management UI
+    networks:
+      - backend
+
+#  # Spring Boot Application (Backend)
+#  websocket-backend:
+#    image: websocket-backend  # This should match your Spring Boot Docker image name
+#    container_name: websocket-backend-container
+#    build: ./websocket-backend  # If building locally from Dockerfile
+#    ports:
+#      - "8080:8080"  # The port your Spring Boot app will be exposed on
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=prod
+#    depends_on:
+#      - websocket-postgres
+#      - websocket-rabbitmq
+#    networks:
+#      - backend
+
+networks:
+  backend:
+    driver: bridge
