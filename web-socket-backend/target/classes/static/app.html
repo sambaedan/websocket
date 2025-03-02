@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Chat</title>
+    <style>
+        .container { display: flex; gap: 20px; }
+        .chat-box { border: 1px solid #ccc; padding: 10px; width: 300px; }
+        .messages { height: 300px; overflow-y: auto; border: 1px solid #eee; margin: 10px 0; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+<h2>WebSocket Chat Application</h2>
+
+<div class="container">
+    <!-- User 1 Interface -->
+    <div class="chat-box" id="user1">
+        <h3>User 1 (A)</h3>
+        <div class="messages" id="messages1"></div>
+        <input type="text" id="message1" placeholder="Type message...">
+        <input type="file" id="file1">
+        <button onclick="sendMessage(1)" disabled>Send</button>
+        <button onclick="saveMessage(1)" disabled>Save Message</button>
+    </div>
+
+    <!-- User 2 Interface -->
+    <div class="chat-box" id="user2">
+        <h3>User 2 (B)</h3>
+        <div class="messages" id="messages2"></div>
+        <input type="text" id="message2" placeholder="Type message...">
+        <input type="file" id="file2">
+        <button onclick="sendMessage(2)" disabled>Send</button>
+        <button onclick="saveMessage(2)" disabled>Save Message</button>
+    </div>
+</div>
+
+<script>
+    // Static user configuration
+    const users = {
+        1: { name: 'A', ws: null },
+        2: { name: 'B', ws: null }
+    };
+
+    // Initialize WebSocket connections
+    function initWS(userId) {
+        const connect = () => {
+            const ws = new WebSocket(`ws://localhost:8080/chat`);
+
+            ws.onopen = () => {
+                console.log(`User ${userId} connected`);
+                users[userId].ws = ws;
+
+                // Enable buttons
+                document.querySelectorAll(`#user${userId} button`).forEach(button => {
+                    button.disabled = false;
+                });
+
+                // Authenticate the user
+                ws.send(`auth:${users[userId].name}`);
+            };
+
+            ws.onmessage = (event) => {
+                const msg = event.data;
+
+                // Handle different types of messages
+                if (msg.startsWith("success:")) {
+                    console.log(`Success: ${msg.substring("success:".length)}`);
+                } else if (msg.startsWith("error:")) {
+                    console.error(`Error: ${msg.substring("error:".length)}`);
+                } else if (msg.startsWith("users:")) {
+                    // Update user list (if needed)
+                    console.log(`Active users: ${msg.substring("users:".length)}`);
+                } else {
+                    // Display chat message
+                    displayMessage(userId, msg);
+                }
+            };
+
+            ws.onclose = () => {
+                console.log(`User ${userId} disconnected`);
+                users[userId].ws = null;
+
+                // Disable buttons
+                document.querySelectorAll(`#user${userId} button`).forEach(button => {
+                    button.disabled = true;
+                });
+
+                // Attempt to reconnect after 5 seconds
+                setTimeout(() => {
+                    console.log(`Reconnecting user ${userId}...`);
+                    connect();
+                }, 5000);
+            };
+
+            ws.onerror = (error) => {
+                console.error(`WebSocket error for user ${userId}:`, error);
+            };
+        };
+
+        // Start the initial connection
+        connect();
+    }
+
+    // Display a message in the chat container
+    function displayMessage(userId, msg) {
+        const messagesDiv = document.getElementById(`messages${userId}`);
+
+        // Check if the message already exists in the chat container
+        const existingMessages = messagesDiv.querySelectorAll('div');
+        const isDuplicate = Array.from(existingMessages).some(element => element.textContent === msg);
+
+        if (!isDuplicate) {
+            const msgElement = document.createElement('div');
+            msgElement.textContent = msg;
+            messagesDiv.appendChild(msgElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    }
+
+    // Send a text message or file
+    function sendMessage(senderId) {
+        const receiverId = senderId === 1 ? 2 : 1; // Dynamically determine the receiver
+        const receiverName = users[receiverId].name;
+        const messageInput = document.getElementById(`message${senderId}`);
+        const fileInput = document.getElementById(`file${senderId}`);
+        const content = messageInput.value.trim();
+        const file = fileInput.files[0];
+
+        if (!content && !file) {
+            alert('Please enter a message or select a file');
+            return;
+        }
+
+        const ws = users[senderId].ws;
+
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+            alert('WebSocket connection is not open. Please try again.');
+            return;
+        }
+
+        if (file) {
+            // Send file metadata first
+            const metadata = `filemeta:${receiverName}:${file.name}:${file.type}`;
+            ws.send(metadata);
+
+            // Send file binary data
+            const reader = new FileReader();
+            reader.onload = () => {
+                const fileData = reader.result;
+                ws.send(fileData);
+            };
+            reader.onerror = () => {
+                console.error('Error reading file');
+                alert('Error reading file. Please try again.');
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            // Send text message
+            const message = `msg:${receiverName}:${content}`;
+            ws.send(message);
+        }
+
+        // Clear inputs
+        messageInput.value = '';
+        fileInput.value = '';
+    }
+
+    // Save a message
+    function saveMessage(senderId) {
+        const receiverId = senderId === 1 ? 2 : 1; // Dynamically determine the receiver
+        const receiverName = users[receiverId].name;
+        const messageInput = document.getElementById(`message${senderId}`);
+        const content = messageInput.value.trim();
+
+        if (!content) {
+            alert('Please enter a message to save');
+            return;
+        }
+
+        const ws = users[senderId].ws;
+
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+            alert('WebSocket connection is not open. Please try again.');
+            return;
+        }
+
+        // Send save message
+        const message = `msg:${receiverName}:${content}`;
+        ws.send(message);
+        const saveMessage = `save:${receiverName}:${content}`;
+        ws.send(saveMessage);
+
+        // Clear input
+        messageInput.value = '';
+    }
+
+    // Initialize connections for both users
+    initWS(1);
+    initWS(2);
+</script>
+</body>
+</html>

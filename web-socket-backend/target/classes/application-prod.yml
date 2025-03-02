@@ -1,0 +1,7 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://websocket-postgres:5432/db_chats
+    username: postgres
+    password: sandesh123
+  rabbitmq:
+    host: websocket-rabbitmq

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <changeSet id="create-user-sequence" author="Sandesh Khanal">
+        <createSequence incrementBy="1" sequenceName="user_seq" startValue="2"/>
+    </changeSet>
+
+    <changeSet id="create-table-users" author="Sandesh Khanal">
+        <createTable tableName="users">
+            <column name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_users"/>
+            </column>
+            <column name="username" type="VARCHAR">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="password" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="token" type="varchar"/>
+            <column name="created_date" type="DATETIME"/>
+            <column name="modified_date" type="DATETIME"/>
+            <column name="created_by" type="BIGINT"/>
+            <column name="modified_by" type="BIGINT"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>
